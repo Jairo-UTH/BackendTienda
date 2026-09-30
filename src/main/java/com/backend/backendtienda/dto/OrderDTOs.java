@@ -22,11 +22,12 @@ public final class OrderDTOs {
 
     // ===== responses =====
     public record GetOrderResponse(
-            Integer orderId,
-            String date,                      
-            BigDecimal totalAmount,
-            List<GetOrderDetailResponse> details) {
-    }
+        Integer orderId,
+        String date,
+        BigDecimal totalAmount,
+        String employeeName,        
+        List<GetOrderDetailResponse> details) {
+}
 
     public record GetOrderDetailResponse(
             String imageUrl,
@@ -34,6 +35,8 @@ public final class OrderDTOs {
             Integer quantity,
             BigDecimal total) {               
     }
+
+    
 
     public record GetOrderListResponse(List<GetOrderResponse> orders) {
 }
