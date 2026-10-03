@@ -25,16 +25,18 @@ public final class OrderDTOs {
         Integer orderId,
         String date,
         BigDecimal totalAmount,
-        String employeeName,        
+        BigDecimal totalImpuesto,      
+        String employeeName,
         List<GetOrderDetailResponse> details) {
 }
 
     public record GetOrderDetailResponse(
-            String imageUrl,
-            String productName,
-            Integer quantity,
-            BigDecimal total) {               
-    }
+        String imageUrl,
+        String productName,
+        Integer quantity,
+        BigDecimal total,
+        BigDecimal impuesto) {         
+}
 
     
 

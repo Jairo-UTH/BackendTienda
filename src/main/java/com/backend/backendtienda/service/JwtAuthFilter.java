@@ -47,8 +47,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
             } catch (JwtException e) {
-                // Token inválido o vencido: se ignora y sigue sin autenticar.
-                // Si la ruta lo requiere, Spring Security la rechazará más adelante.
             }
         }
 

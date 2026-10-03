@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -28,6 +29,7 @@ public class OrderService {
 
     private static final DateTimeFormatter DATE_FORMAT =
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+    private static final BigDecimal CIEN = BigDecimal.valueOf(100);
 
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
@@ -59,6 +61,8 @@ public class OrderService {
         order.setTotalAmount(req.totalAmount());
         order.setEmployee(empleadoActual);
 
+        BigDecimal totalImpuestoAcumulado = BigDecimal.ZERO;
+
         for (CreateOrderDetailRequest d : req.details()) {
             Product product = productRepository.findById(d.productId())
                     .orElseThrow(() -> new ResponseStatusException(
@@ -66,15 +70,25 @@ public class OrderService {
 
             product.setStockQuantity(product.getStockQuantity() - d.quantity());
 
+            BigDecimal subtotalLinea = d.unitPrice().multiply(BigDecimal.valueOf(d.quantity()));
+            BigDecimal impuestoLinea = subtotalLinea
+                    .multiply(product.getImpuesto().getPorcentaje())
+                    .divide(CIEN, 2, RoundingMode.HALF_UP);
+
+            totalImpuestoAcumulado = totalImpuestoAcumulado.add(impuestoLinea);
+
             OrderDetail detail = new OrderDetail();
             detail.setOrder(order);
             detail.setProduct(product);
             detail.setQuantity(d.quantity());
             detail.setUnitPrice(d.unitPrice());
+            detail.setImpuesto(impuestoLinea);
             order.getOrderDetails().add(detail);
 
             movimientoService.registrarVenta(product, d.quantity(), d.unitPrice(), empleadoActual);
         }
+
+        order.setTotalImpuesto(totalImpuestoAcumulado);
 
         return orderRepository.save(order).getOrderId();
     }
@@ -86,13 +100,15 @@ public class OrderService {
                         o.getOrderId(),
                         o.getOrderDate().format(DATE_FORMAT),
                         o.getTotalAmount(),
+                        o.getTotalImpuesto(),
                         o.getEmployee() != null ? o.getEmployee().getFullName() : null,
                         o.getOrderDetails().stream()
                                 .map(od -> new GetOrderDetailResponse(
                                         buildImageUrl(serverUrl, od.getProduct().getImage()),
                                         od.getProduct().getName(),
                                         od.getQuantity(),
-                                        od.getUnitPrice().multiply(BigDecimal.valueOf(od.getQuantity()))))
+                                        od.getUnitPrice().multiply(BigDecimal.valueOf(od.getQuantity())),
+                                        od.getImpuesto()))
                                 .toList()))
                 .toList();
     }

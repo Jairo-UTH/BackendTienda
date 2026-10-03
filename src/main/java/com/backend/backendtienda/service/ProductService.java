@@ -4,8 +4,10 @@ import com.backend.backendtienda.dto.ProductDTOs.CreateProductRequest;
 import com.backend.backendtienda.dto.ProductDTOs.GetProductResponse;
 import com.backend.backendtienda.dto.ProductDTOs.UpdateProductRequest;
 import com.backend.backendtienda.entity.Category;
+import com.backend.backendtienda.entity.Impuesto;  
 import com.backend.backendtienda.entity.Product;
 import com.backend.backendtienda.repository.CategoryRepository;
+import com.backend.backendtienda.repository.ImpuestoRepository;   
 import com.backend.backendtienda.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -29,14 +31,17 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final ImpuestoRepository impuestoRepository;   
     private final String folder;
     private final Path uploadsFolder;
 
     public ProductService(ProductRepository productRepository,
                           CategoryRepository categoryRepository,
+                          ImpuestoRepository impuestoRepository,  
                           @Value("${app.images.products-folder}") String folder) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
+        this.impuestoRepository = impuestoRepository;   
         this.folder = folder;
         this.uploadsFolder = Paths.get(folder).toAbsolutePath().normalize();
         try {
@@ -56,6 +61,9 @@ public class ProductService {
         Category category = categoryRepository.findById(req.categoryId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "La categoría no existe"));
 
+        Impuesto impuesto = impuestoRepository.findById(req.idImpuesto())   
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "El impuesto no existe"));
+
         String extension = StringUtils.getFilenameExtension(image.getOriginalFilename());
         String suffix = (extension != null && extension.matches("[A-Za-z0-9]{1,10}")) ? "." + extension : "";
         String fileName = UUID.randomUUID() + suffix;
@@ -72,8 +80,60 @@ public class ProductService {
         product.setPrice(req.price());
         product.setStockQuantity(req.stockQuantity());
         product.setImage(fileName);
+        product.setImpuesto(impuesto);   
 
         return productRepository.save(product).getProductId();
+    }
+
+    @Transactional
+    public void update(UpdateProductRequest req) {
+        Product product = productRepository.findById(req.productId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "El producto no existe"));
+
+        Category category = categoryRepository.findById(req.categoryId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "La categoría no existe"));
+
+        Impuesto impuesto = impuestoRepository.findById(req.idImpuesto())   
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "El impuesto no existe"));
+
+        product.setCategory(category);
+        product.setName(req.name());
+        product.setPrice(req.price());
+        product.setStockQuantity(req.stockQuantity());
+        product.setImpuesto(impuesto);   
+
+        MultipartFile image = req.image();
+        if (image != null && !image.isEmpty()) {
+            String oldImage = product.getImage();
+
+            String extension = StringUtils.getFilenameExtension(image.getOriginalFilename());
+            String suffix = (extension != null && extension.matches("[A-Za-z0-9]{1,10}")) ? "." + extension : "";
+            String fileName = UUID.randomUUID() + suffix;
+
+            try (InputStream in = image.getInputStream()) {
+                Files.copy(in, uploadsFolder.resolve(fileName));
+            } catch (IOException e) {
+                throw new UncheckedIOException("No se pudo guardar la imagen", e);
+            }
+
+            product.setImage(fileName);
+
+            if (oldImage != null && !oldImage.isBlank()) {
+                try {
+                    Files.deleteIfExists(uploadsFolder.resolve(oldImage));
+                } catch (IOException e) {
+             
+                }
+            }
+        }
+    }
+
+    @Transactional
+    public void delete(Integer id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "El producto no existe"));
+
+        productRepository.delete(product);
     }
 
     @Transactional(readOnly = true)
@@ -90,6 +150,9 @@ public class ProductService {
                         p.getName(),
                         p.getPrice(),
                         p.getStockQuantity(),
+                        p.getImpuesto().getIdImpuesto(),       
+                        p.getImpuesto().getNombre(),           
+                        p.getImpuesto().getPorcentaje(),       
                         buildImageUrl(serverUrl, p.getImage())))
                 .toList();
     }
@@ -100,56 +163,4 @@ public class ProductService {
         }
         return serverUrl + "/" + folder + "/" + image;
     }
-
-
-
-    //
-    @Transactional
-    public void update(UpdateProductRequest req) {
-    Product product = productRepository.findById(req.productId())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "El producto no existe"));
-
-    Category category = categoryRepository.findById(req.categoryId())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "La categoría no existe"));
-
-    product.setCategory(category);
-    product.setName(req.name());
-    product.setPrice(req.price());
-    product.setStockQuantity(req.stockQuantity());
-
-    MultipartFile image = req.image();
-    if (image != null && !image.isEmpty()) {
-        String oldImage = product.getImage();
-
-        String extension = StringUtils.getFilenameExtension(image.getOriginalFilename());
-        String suffix = (extension != null && extension.matches("[A-Za-z0-9]{1,10}")) ? "." + extension : "";
-        String fileName = UUID.randomUUID() + suffix;
-
-        try (InputStream in = image.getInputStream()) {
-            Files.copy(in, uploadsFolder.resolve(fileName));
-        } catch (IOException e) {
-            throw new UncheckedIOException("No se pudo guardar la imagen", e);
-        }
-
-        product.setImage(fileName);
-
-        
-        if (oldImage != null && !oldImage.isBlank()) {
-            try {
-                Files.deleteIfExists(uploadsFolder.resolve(oldImage));
-            } catch (IOException e) {
-                
-            }
-        }
-    }
-    
-}
-
-@Transactional
-public void delete(Integer id) {
-    Product product = productRepository.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "El producto no existe"));
-
-    productRepository.delete(product);
-}
 }

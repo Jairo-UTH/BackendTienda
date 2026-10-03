@@ -68,4 +68,17 @@ public class OrderDetail {
     public void setUnitPrice(BigDecimal unitPrice) {
         this.unitPrice = unitPrice;
     }
+
+    
+    @Column(name = "impuesto", nullable = false, precision = 18, scale = 2)
+    
+    private BigDecimal impuesto;
+
+    public BigDecimal getImpuesto() {
+        return impuesto;
+    }
+
+    public void setImpuesto(BigDecimal impuesto) {
+        this.impuesto = impuesto;
+    }
 }

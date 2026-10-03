@@ -73,4 +73,15 @@ public class Order {
     public void setEmployee(Employee employee) {
         this.employee = employee;
     }
+
+    @Column(name = "total_impuesto", nullable = false, precision = 18, scale = 2)
+    private BigDecimal totalImpuesto;
+
+    public BigDecimal getTotalImpuesto() {
+        return totalImpuesto;
+    }
+
+    public void setTotalImpuesto(BigDecimal totalImpuesto) {
+        this.totalImpuesto = totalImpuesto;
+    }
 }

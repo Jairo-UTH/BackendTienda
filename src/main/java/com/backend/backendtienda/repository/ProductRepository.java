@@ -8,9 +8,9 @@ import java.util.List;
 
 public interface ProductRepository extends JpaRepository<Product, Integer> {
 
-    @EntityGraph(attributePaths = "category")
+    @EntityGraph(attributePaths = {"category", "impuesto"})
     List<Product> findAllByOrderByCreatedAtDesc();
 
-    @EntityGraph(attributePaths = "category")
+    @EntityGraph(attributePaths = {"category", "impuesto"})
     List<Product> findByCategory_CategoryIdOrderByCreatedAtDesc(Integer categoryId);
 }

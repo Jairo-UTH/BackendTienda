@@ -43,7 +43,7 @@ public Integer registrarCompra(CreateMovimientoRequest req) {
 
     product.setStockQuantity(product.getStockQuantity() + req.cantidad());
 
-    if (req.precioVenta() != null) {   // ← NUEVO: si no llega, se conserva el precio actual
+    if (req.precioVenta() != null) { 
         product.setPrice(req.precioVenta());
     }
 
@@ -78,7 +78,6 @@ public Integer registrarCompra(CreateMovimientoRequest req) {
                 .toList();
     }
 
-    // Obtiene el empleado logueado a partir del email guardado en el token JWT
     private Employee getEmpleadoActual() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return employeeRepository.findByEmail(email).orElse(null);

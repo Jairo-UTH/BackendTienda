@@ -2,7 +2,6 @@ package com.backend.backendtienda.controller;
 
 import com.backend.backendtienda.dto.ProductDTOs.CreateProductRequest;
 import com.backend.backendtienda.dto.ProductDTOs.GetProductListResponse;
-import com.backend.backendtienda.dto.ProductDTOs.GetProductResponse;
 import com.backend.backendtienda.dto.ProductDTOs.ReturnProductRequest;
 import com.backend.backendtienda.service.ProductService;
 import org.springframework.http.MediaType;
