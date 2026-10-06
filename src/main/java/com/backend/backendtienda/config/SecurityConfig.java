@@ -30,7 +30,7 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()   
 
             .requestMatchers("/api/Auth/**").permitAll()
-            .requestMatchers(HttpMethod.GET, "/api/Category/**", "/api/Product/getAll").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/Category/**", "/api/category/**", "/api/Product/getAll", "/api/product/getAll").permitAll()
             .requestMatchers("/uploads/**").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/Order/create").permitAll()
             .requestMatchers("/api/Employee/**", "/api/Position/**").hasRole("GERENTE")
@@ -38,6 +38,9 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.PUT, "/api/Product/**").hasRole("GERENTE")
             .requestMatchers("/api/ProductoMovimiento/**").hasRole("GERENTE")
             .requestMatchers(HttpMethod.DELETE, "/api/Product/**").hasRole("GERENTE")
+            .requestMatchers("/api/Reporte/factura/**").permitAll()
+            .requestMatchers("/api/Reporte/**").hasRole("GERENTE")
+            .requestMatchers("/error").permitAll()
             .anyRequest().authenticated()
         )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
